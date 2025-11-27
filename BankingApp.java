@@ -1,7 +1,8 @@
+package BackTracking;
+
 import java.util.*;
 
 public class BankingApp {
-
 
     static class Customer {
         private final String name;
@@ -11,6 +12,7 @@ public class BankingApp {
             this.name = name;
             this.email = email;
         }
+
         public String getName() { return name; }
     }
 
@@ -38,7 +40,7 @@ public class BankingApp {
         }
 
         public void withdraw(double amount) throws Exception {
-            if (balance < amount) throw new Exception("Insufficient funds.");
+            if (balance < amount) throw new Exception("Insufficient.");
             balance -= amount;
             record("WITHDRAW", -amount);
         }
@@ -51,110 +53,97 @@ public class BankingApp {
         }
 
         private void record(String type, double amount) {
-            transactions.add(String.format("%s (%.2f) | Balance: %.2f", type, amount, balance));
+            transactions.add(type + " (" + amount + ") | Balance: " + balance);
         }
     }
-
 
     static class AccountRepository {
         private final Map<String, Account> accounts = new HashMap<>();
         private int id = 1;
 
-        public Account create(Customer customer, String type) {
+        public Account create(Customer c, String type) {
             String accNo = "ACC" + id++;
-            Account acc = new Account(accNo, customer, type);
+            Account acc = new Account(accNo, c, type);
             accounts.put(accNo, acc);
             return acc;
         }
 
-        public Account find(String accNo) {
-            return accounts.get(accNo);
-        }
+        public Account find(String accNo) { return accounts.get(accNo); }
 
-        public List<Account> findAll() {
-            return new ArrayList<>(accounts.values());
-        }
+        public List<Account> findAll() { return new ArrayList<>(accounts.values()); }
 
         public List<Account> findByName(String name) {
             List<Account> result = new ArrayList<>();
             for (Account acc : accounts.values()) {
-                if (acc.getCustomer().getName().equalsIgnoreCase(name)) {
-                    result.add(acc);
-                }
+                if (acc.getCustomer().getName().equalsIgnoreCase(name)) result.add(acc);
             }
             return result;
         }
     }
 
-
     static class BankingService {
         private final AccountRepository repo = new AccountRepository();
 
         public Account openAccount(String name, String email, String type) throws Exception {
-            validate(name, email, type);
+            validateInputs(name, email, type);
             return repo.create(new Customer(name, email), type);
         }
 
-        public void deposit(String acc, double amt) throws Exception {
+        public void deposit(String accNo, double amt) throws Exception {
             validateAmount(amt);
-            get(acc).deposit(amt);
+            getAccount(accNo).deposit(amt);
         }
 
-        public void withdraw(String acc, double amt) throws Exception {
+        public void withdraw(String accNo, double amt) throws Exception {
             validateAmount(amt);
-            get(acc).withdraw(amt);
+            getAccount(accNo).withdraw(amt);
         }
 
         public void transfer(String from, String to, double amt) throws Exception {
             validateAmount(amt);
-            get(from).transfer(get(to), amt);
+            getAccount(from).transfer(getAccount(to), amt);
         }
 
-        public List<String> getStatement(String acc) throws Exception {
-            return get(acc).getTransactions();
+        public List<String> getStatement(String accNo) throws Exception {
+            return getAccount(accNo).getTransactions();
         }
 
-        public List<Account> listAll() {
-            return repo.findAll();
-        }
+        public List<Account> listAll() { return repo.findAll(); }
 
-        public List<Account> search(String name) {
-            return repo.findByName(name);
-        }
+        public List<Account> search(String name) { return repo.findByName(name); }
 
-        private Account get(String accNo) throws Exception {
+        private Account getAccount(String accNo) throws Exception {
             Account acc = repo.find(accNo);
-            if (acc == null) throw new Exception("Account not found.");
+            if (acc == null) throw new Exception("Not found.");
             return acc;
         }
 
-        private void validate(String name, String email, String type) throws Exception {
-            if (name.isBlank()) throw new Exception("Invalid name.");
-            if (!email.contains("@")) throw new Exception("Invalid email.");
+        private void validateInputs(String name, String email, String type) throws Exception {
+            if (name.isBlank()) throw new Exception("Invalid.");
+            if (!email.contains("@")) throw new Exception("Invalid.");
             if (!type.equalsIgnoreCase("SAVINGS") && !type.equalsIgnoreCase("CURRENT"))
-                throw new Exception("Type must be SAVINGS or CURRENT.");
+                throw new Exception("Invalid.");
         }
 
         private void validateAmount(double amt) throws Exception {
-            if (amt <= 0) throw new Exception("Amount must be > 0");
+            if (amt <= 0) throw new Exception("Invalid.");
         }
     }
 
-
     public static void main(String[] args) {
+
         Scanner sc = new Scanner(System.in);
         BankingService bank = new BankingService();
 
         while (true) {
             System.out.println("""
-                ==== Banking Menu ====
                 1. Open Account
                 2. Deposit
                 3. Withdraw
                 4. Transfer
                 5. Statement
                 6. List Accounts
-                7. Search Accounts
+                7. Search
                 8. Exit
                 Enter choice: """);
 
@@ -163,41 +152,55 @@ public class BankingApp {
             try {
                 switch (ch) {
                     case 1 -> {
-                        System.out.print("Name: "); String n = sc.nextLine();
-                        System.out.print("Email: "); String e = sc.nextLine();
-                        System.out.print("Type: "); String t = sc.nextLine();
+                        System.out.print("Name: ");
+                        String n = sc.nextLine();
+                        System.out.print("Email: ");
+                        String e = sc.nextLine();
+                        System.out.print("Type: ");
+                        String t = sc.nextLine();
                         Account a = bank.openAccount(n, e, t);
-                        System.out.println("Account Created: " + a.getAccountNumber());
+                        System.out.println("Created: " + a.getAccountNumber());
                     }
                     case 2 -> {
-                        System.out.print("Account No: "); String acc = sc.nextLine();
-                        System.out.print("Amount: "); double amt = Double.parseDouble(sc.nextLine());
+                        System.out.print("Acc: ");
+                        String acc = sc.nextLine();
+                        System.out.print("Amount: ");
+                        double amt = Double.parseDouble(sc.nextLine());
                         bank.deposit(acc, amt);
                     }
                     case 3 -> {
-                        System.out.print("Account No: "); String acc = sc.nextLine();
-                        System.out.print("Amount: "); double amt = Double.parseDouble(sc.nextLine());
+                        System.out.print("Acc: ");
+                        String acc = sc.nextLine();
+                        System.out.print("Amount: ");
+                        double amt = Double.parseDouble(sc.nextLine());
                         bank.withdraw(acc, amt);
                     }
                     case 4 -> {
-                        System.out.print("From: "); String f = sc.nextLine();
-                        System.out.print("To: "); String t = sc.nextLine();
-                        System.out.print("Amount: "); double amt = Double.parseDouble(sc.nextLine());
+                        System.out.print("From: ");
+                        String f = sc.nextLine();
+                        System.out.print("To: ");
+                        String t = sc.nextLine();
+                        System.out.print("Amount: ");
+                        double amt = Double.parseDouble(sc.nextLine());
                         bank.transfer(f, t, amt);
                     }
                     case 5 -> {
-                        System.out.print("Account No: "); String acc = sc.nextLine();
+                        System.out.print("Acc: ");
+                        String acc = sc.nextLine();
                         bank.getStatement(acc).forEach(System.out::println);
                     }
-                    case 6 -> bank.listAll()
-                            .forEach(a -> System.out.println(a.getAccountNumber() + " | " + a.getCustomer().getName() + " | " + a.getBalance()));
+                    case 6 -> bank.listAll().forEach(a ->
+                            System.out.println(a.getAccountNumber() + " | " + a.getCustomer().getName() + " | " + a.getBalance())
+                    );
                     case 7 -> {
-                        System.out.print("Name: "); String name = sc.nextLine();
-                        bank.search(name)
-                                .forEach(a -> System.out.println(a.getAccountNumber() + " | " + a.getCustomer().getName()));
+                        System.out.print("Name: ");
+                        String name = sc.nextLine();
+                        bank.search(name).forEach(a ->
+                                System.out.println(a.getAccountNumber() + " | " + a.getCustomer().getName())
+                        );
                     }
-                    case 8 -> { System.out.println("Goodbye!"); return; }
-                    default -> System.out.println("Invalid option.");
+                    case 8 -> { return; }
+                    default -> System.out.println("Invalid");
                 }
             } catch (Exception ex) {
                 System.out.println("Error: " + ex.getMessage());
